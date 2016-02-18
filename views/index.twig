@@ -1,0 +1,114 @@
+{% extends 'layout.twig' %}
+
+{% block body %}
+
+	<h1>Le super Chat temps réel !</h1>
+
+    <section id="zone_chat">
+        {% if messages.length > 0 %}
+            {% for message in messages|reverse %}
+                <p class="histo"><strong>{{ message.author.username }}</strong> {{ message.message }}</p>
+            {% endfor %}                
+        {% endif %}            
+    </section>
+    
+    <section id="updates"></section>
+
+    <form action="/" method="post" id="formulaire_chat">
+        <input type="text" name="message" id="message" placeholder="Votre message..." size="50" autofocus />
+        <input type="submit" id="envoi_message" value="Envoyer" />
+    </form>
+
+{% endblock %}
+
+{% block js %}
+
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript">
+
+	    // Connexion à socket.io
+	    var host = window.location.host;
+	    var socket = io.connect('http://'+host);
+
+	    // On demande le pseudo, on l'envoie au serveur et on l'affiche dans le titre
+	    var session_user = '{{ user.username }}';
+	    socket.emit('nouveau_client');
+	    document.title = session_user + ' - ' + document.title;
+
+	    // Quand on reçoit un message, on l'insère dans la page
+	    socket.on('message', function(data) {
+	        insereMessage(data.pseudo, data.message, false);
+	        //clear typing field
+	        $("#"+person.name+"").remove();
+	        clearTimeout(timeout);
+	        timeout = setTimeout(timeoutFunction, 0);
+	    })
+
+	    // Quand un nouveau client se connecte, on affiche l'information
+	    socket.on('client_connected', function(pseudo) {
+	        $('#zone_chat').append('<p><em>' + pseudo + ' a rejoint le Chat !</em></p>');
+	    })
+
+	    socket.on('client_disconnect', function(pseudo) {
+	        $('#zone_chat').append('<p><em>' + pseudo + ' a quitté le Chat !</em></p>');
+	    })
+
+	    // Lorsqu'on envoie le formulaire, on transmet le message et on l'affiche sur la page
+	    $('#formulaire_chat').submit(function () {
+	        var message = $('#message').val();
+	        socket.emit('message', message); // Transmet le message aux autres
+	        insereMessage(session_user, message, true); // Affiche le message aussi sur notre page
+	        $('#message').val('').focus(); // Vide la zone de Chat et remet le focus dessus
+	        return false; // Permet de bloquer l'envoi "classique" du formulaire
+	    });
+	    
+	    // Ajoute un message dans la page
+	    function insereMessage(pseudo, message, author) {
+	        if(author){
+	            $('#zone_chat').append('<p class="author"><strong>' + pseudo + '</strong> ' + message + '</p>');
+	        }
+	        else{
+	            $('#zone_chat').append('<p><strong>' + pseudo + '</strong> ' + message + '</p>');
+	        }
+	    }
+
+	    var typing = false;  
+	    var timeout = undefined;
+
+	    function timeoutFunction() {  
+	        typing = false;
+	        socket.emit("typing", false);
+	    }
+
+	    $("#message").keypress(function(e){
+	        if (e.which !== 13) {
+	            if (typing === false && $("#message").is(":focus")) {
+	                typing = true;
+	                socket.emit("typing", true);
+	            } else {
+	                clearTimeout(timeout);
+	                timeout = setTimeout(timeoutFunction, 5000);
+	            }
+	        }
+	    });
+
+	    socket.on("isTyping", function(data) {  
+	        if (data.isTyping) {
+	            if ($("#"+data.person+"").length === 0) {
+	                $("#updates").append("<li id='"+ data.person +"'><span class='text-muted'><small><i class='fa fa-keyboard-o'></i>" + data.person + " is typing.</small></li>");
+	                timeout = setTimeout(timeoutFunction, 5000);
+	            }
+	        } else {
+	            $("#"+data.person+"").remove();
+	        }
+	    });
+
+	    $("#zone_chat").bind("DOMSubtreeModified",function() {  
+	        $("#zone_chat").animate({
+	            scrollTop: $("#zone_chat")[0].scrollHeight
+	        });
+	    });
+	</script>
+
+{% endblock %}
