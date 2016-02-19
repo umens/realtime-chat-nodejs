@@ -24,9 +24,25 @@ app.io               = io;
 //--import config files
 var config   = require('./config/config.js');
 var dbConfig = require('./config/database.js');
-//--Views
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'twig');
+
+/**
+ * Development Settings
+ */
+if (app.get('env') === 'development') {
+    // This will change in production since we'll be using the dist folder
+    app.use(express.static(path.join(__dirname, '../client')));
+    // This covers serving up the index page
+    app.use(express.static(path.join(__dirname, '../client/.tmp')));
+    app.use(express.static(path.join(__dirname, '../client/app')));
+}
+/**
+ * Production Settings
+ */
+if (app.get('env') === 'production') {
+    // changes it to use the optimized version for production
+    app.use(express.static(path.join(__dirname, '/dist')));
+}
+
 //--database
 //--models
 var Message = require('./models/message.js');
@@ -39,12 +55,11 @@ mongoose.connect(dbConfig.url, function(err) {
 });
 var sessionStore = new MongoStore({ mongooseConnection: mongoose.connection });
 //--others
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+//app.use(favicon(path.join(__dirname, 'dist', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser(config.sessionSecret));
-app.use(express.static(path.join(__dirname, 'public')));
 //session
 var sessionOpts = {
   saveUninitialized: true, // saved new sessions
@@ -77,46 +92,13 @@ app.use(function(req, res, next) {
 
 //routing
 //--imports
-var routes = require('./routes/index')(passport);;
-//var users = require('./routes/users');
+var routes = require('./routes/index')(passport);
+var users = require('./routes/users');
 //--usage
 app.use('/', routes);
-//app.use('/user/', users);
-
 
 //socket
-// Fonction du socket
-io.on('connection', function (socket) {
-
-    // Dès qu'on nous donne un pseudo, on le stocke en variable de session
-    socket.on('nouveau_client', function() {
-        // pseudo = ent.encode(pseudo);
-        // socket.pseudo = pseudo;
-        socket.broadcast.emit('client_connected', socket.request.user.username);
-    });
-
-    // Dès qu'on reçoit un "message" (clic sur le bouton), on le note dans la console
-    socket.on('message', function (message) {
-        message = ent.encode(message);
-        socket.broadcast.emit('message', {'pseudo': socket.request.user.username, 'message': message});
-        var db_message = new Message({ 'author': socket.request.user._id, 'message': message });
-        db_message.save(function(err) {
-          if (err) throw err;
-
-          console.log('Message saved successfully!');
-        });
-    }); 
-
-    socket.on('disconnect', function () {        
-        socket.broadcast.emit('client_disconnect', socket.request.user.username);
-    }); 
-
-
-    socket.on("typing", function(data) {  
-        if (typeof socket.request.user.username !== "undefined")
-            socket.broadcast.emit("isTyping", {isTyping: data, person: socket.request.user.username});
-    });
-});
+require('./sockets/base')(io);
 
 function onAuthorizeSuccess(data, accept){
 	console.log('successful connection to socket.io');
@@ -139,11 +121,10 @@ function onAuthorizeFail(data, message, error, accept){
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
 });
-
 // error handlers
 
 // development error handler
@@ -151,7 +132,7 @@ app.use(function(req, res, next) {
 if (app.get('env') === 'development') {
   app.use(function(err, req, res, next) {
     res.status(err.status || 500);
-    res.render('error', {
+    res.send('error', {
       message: err.message,
       error: err
     });
@@ -162,7 +143,7 @@ if (app.get('env') === 'development') {
 // no stacktraces leaked to user
 app.use(function(err, req, res, next) {
   res.status(err.status || 500);
-  res.render('error', {
+  res.send('error', {
     message: err.message,
     error: {}
   });

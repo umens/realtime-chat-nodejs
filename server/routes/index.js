@@ -15,30 +15,37 @@ var isAuthenticated = function (req, res, next) {
 
 module.exports = function(passport){
 
-	/* GET login page. */
-	router.get('/login', function(req, res) {
-    	// Display the Login page with any flash message, if any
-		res.render('login', { message: req.flash('message') });
-	});
+	// /* GET login page. */
+	// router.get('/login', function(req, res) {
+ //    	// Display the Login page with any flash message, if any
+	// 	res.render('login', { message: req.flash('message') });
+	// });
 
-	/* Handle Login POST */
-	router.post('/login', passport.authenticate('login', {
-		successRedirect: '/',
-		failureRedirect: '/login',
-		failureFlash : true  
-	}));
+	// /* Handle Login POST */
+	// router.post('/login', passport.authenticate('login', {
+	// 	successRedirect: '/',
+	// 	failureRedirect: '/login',
+	// 	failureFlash : true  
+	// }));
 
-	/* GET Registration Page */
-	router.get('/signup', function(req, res){
-		res.render('register',{message: req.flash('message')});
-	});
+	// /* GET Registration Page */
+	// router.get('/signup', function(req, res){
+	// 	res.render('register',{message: req.flash('message')});
+	// });
 
 	/* Handle Registration POST */
-	router.post('/signup', passport.authenticate('signup', {
-		successRedirect: '/',
-		failureRedirect: '/signup',
-		failureFlash : true  
-	}));
+	// router.post('/signup', passport.authenticate('signup', {
+	// 	successRedirect: '/',
+	// 	failureRedirect: '/signup',
+	// 	failureFlash : true  
+	// }));
+	router.post('/signup', function (req, res) {
+		console.log(req.body);
+		res.json({
+			'msg': 'success!'
+		});
+	});
+
 
 	/* GET Home Page */
 	router.get('/', isAuthenticated, function (req, res) {
