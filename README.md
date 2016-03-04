@@ -20,7 +20,7 @@ Run
 grunt build
 ```
 for building (on server's dist folder)
----
+___
 or 
 ```
 grunt live
@@ -35,4 +35,9 @@ then
 ```
 npm start
 ```
-to launch the node server.
+to launch the node server in production env.
+or 
+```
+npm test
+```
+to launch the node server in dev env.
