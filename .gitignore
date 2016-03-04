@@ -106,3 +106,4 @@ $RECYCLE.BIN/
 /client/app/*
 /client/bower_components/*
 /client/test/*
+/client/.tmp/*
