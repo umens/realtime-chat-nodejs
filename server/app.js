@@ -1,16 +1,17 @@
 //dependencies
-var express          = require('express');
-var app              = express();
-var io               = require('socket.io');
-var fs               = require('fs');
-var mongoose         = require('mongoose');
-var path             = require('path');
-var favicon          = require('serve-favicon');
-var logger           = require('morgan');
-var cookieParser     = require('cookie-parser');
-var bodyParser       = require('body-parser');
-var session          = require('express-session');
-var passport         = require('passport');
+var express      = require('express');
+var app          = express();
+var io           = require('socket.io');
+var fs           = require('fs');
+var mongoose     = require('mongoose');
+var path         = require('path');
+var favicon      = require('serve-favicon');
+var logger       = require('morgan');
+var cookieParser = require('cookie-parser');
+var bodyParser   = require('body-parser');
+var session      = require('express-session');
+var passport     = require('passport');
+var MongoStore   = require('connect-mongo')(session);
 
 var io               = io();
 app.io               = io;
@@ -58,7 +59,7 @@ app.use(cookieParser(config.sessionSecret));
 var sessionOpts = {
   saveUninitialized: true, // saved new sessions
   resave: false, // do not automatically write to the session store
-  //store: sessionStore,
+  store: new MongoStore({ mongooseConnection: mongoose.connection }),
   secret: config.sessionSecret,
   cookie : { httpOnly: true, maxAge: 60000 } // configure when sessions expires
 };
