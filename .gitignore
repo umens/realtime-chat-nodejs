@@ -100,3 +100,9 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# app folders to ignore
+/server/dist/*
+/client/app/*
+/client/bower_components/*
+/client/test/*
