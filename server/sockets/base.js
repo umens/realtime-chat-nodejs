@@ -10,19 +10,24 @@ module.exports = function(io){
         handshake: true
     }));
     var online_users = [];
+    var username;
 
     io.on('connection', function (socket) {
 
         socket.emit('on_connect', online_users);
 
-        //console.log('hello! ', socket.decoded_token.name);
-        //console.log('test');
+        if(socket.decoded_token.username !== undefined){
+            username = socket.decoded_token.username;
+        }
+        else{
+            username = socket.decoded_token.firstname + ' ' + socket.decoded_token.lastname;
+        }
 
         // Dès qu'on nous donne un pseudo, on le stocke en variable de session
         socket.on('nouveau_client', function() {
-            online_users.push(socket.decoded_token.username);
+            online_users.push(username);
             //socket.user = socket.decoded_token.username;
-            socket.broadcast.emit('client_connected', socket.decoded_token.username);
+            socket.broadcast.emit('client_connected', username);
         });
 
         // Dès qu'on reçoit un "message" (clic sur le bouton), on le note dans la console
@@ -38,16 +43,16 @@ module.exports = function(io){
         }); 
 
         socket.on('disconnect', function () {        
-            var index = online_users.indexOf(socket.decoded_token.username);
+            var index = online_users.indexOf(username);
             if (index > -1) {
                 online_users.splice(index, 1);
             }
-            socket.broadcast.emit('client_disconnect', socket.decoded_token.username);
+            socket.broadcast.emit('client_disconnect', username);
         }); 
 
 
         socket.on("typing", function(data) {
-            socket.broadcast.emit("isTyping", {isTyping: data, person: socket.decoded_token.username});
+            socket.broadcast.emit("isTyping", {isTyping: data, person: username});
         });
     });
 };

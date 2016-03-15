@@ -107,3 +107,5 @@ $RECYCLE.BIN/
 /client/bower_components/*
 /client/test/*
 /client/.tmp/*
+/server/certificates/*
+/server/config/config.js

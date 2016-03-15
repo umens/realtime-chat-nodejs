@@ -1,0 +1,22 @@
+module.exports = {
+    sessionSecret: 'secret_goes_here',
+    facebook: {
+    	app_id: 'app_id',
+    	app_secret: 'app_secret',
+        app_callback: 'callback_url'
+    },
+    twitter: {
+        app_id: 'app_id',
+        app_secret: 'app_secret',
+        app_callback: 'callback_url'
+    },
+    google: {
+        app_id: 'app_id',
+        app_secret: 'app_secret',
+        app_callback: 'callback_url'
+    },
+    database: {
+    	url: 'db_url'
+    },
+    certificatePassphrase: 'passphrase'
+};

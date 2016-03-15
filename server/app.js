@@ -13,13 +13,12 @@ var session      = require('express-session');
 var passport     = require('passport');
 var MongoStore   = require('connect-mongo')(session);
 
-var io               = io();
-app.io               = io;
+var io           = io();
+app.io           = io;
 
 //configuration
 //--import config files
 var config   = require('./config/config.js');
-var dbConfig = require('./config/database.js');
 
 /**
  * Development Settings
@@ -43,10 +42,10 @@ if (app.get('env') === 'production') {
 //--models
 
 //--connection
-mongoose.connect(dbConfig.url, function(err) {
+mongoose.connect(config.database.url, function(err) {
   	if (err) {
     	console.log("Could not connect to database");
-    	throw err;
+    	//throw err;
   	}
 });
 //--others
@@ -57,11 +56,18 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser(config.sessionSecret));
 //session
 var sessionOpts = {
-  saveUninitialized: true, // saved new sessions
-  resave: false, // do not automatically write to the session store
-  store: new MongoStore({ mongooseConnection: mongoose.connection }),
-  secret: config.sessionSecret,
-  cookie : { httpOnly: true, maxAge: 60000 } // configure when sessions expires
+    saveUninitialized: true, // saved new sessions
+    resave: false, // do not automatically write to the session store
+    store: new MongoStore(
+        { 
+            mongooseConnection: mongoose.connection 
+        },
+        function(error) {
+            console.log(error || "connect-mongodb setup ok");
+        }
+    ),
+    secret: config.sessionSecret,
+    cookie : { httpOnly: true, maxAge: 60000 } // configure when sessions expires
 };
 app.use(session(sessionOpts));
 app.use(passport.initialize());
@@ -73,7 +79,7 @@ initPassport(passport);
 
 //routing
 //--imports
-var auth = require('./routes/auth')(passport);
+var auth = require('./routes/auth')(passport, session);
 var routes = require('./routes/index')(passport);
 var users = require('./routes/users')(passport);
 
@@ -97,12 +103,12 @@ app.use(function(req, res, next) {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500).send('error', {
-        message: err.message,
+    app.use(function(err, req, res, next) {
+        res.status(err.status || 500).send('error', {
+            message: err.message,
         error: err
+        });
     });
-  });
 }
 
 // production error handler
